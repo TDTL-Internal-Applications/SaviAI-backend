@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Analysis API</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 100px;
+            margin: 10px 0;
+        }
+
+        button {
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        #result {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Data Analysis API</h1>
+    <p>Enter your query and submit to analyze data:</p>
+
+    <div>
+        <label for="query">Query:</label>
+        <textarea id="query"
+            placeholder="Enter your data analysis query here...">Show me a summary of customer data</textarea>
+    </div>
+
+    <div>
+        <label for="table">Table (optional):</label>
+        <input type="text" id="table" placeholder="Enter table name (optional)">
+    </div>
+
+    <button onclick="sendQuery()">Analyze Data</button>
+
+    <div id="result"></div>
+
+    <script>
+        function sendQuery() {
+            const query = document.getElementById('query').value;
+            const table = document.getElementById('table').value;
+            const resultDiv = document.getElementById('result');
+
+            resultDiv.innerHTML = 'Processing request...';
+
+            const data = {
+                query: query
+            };
+
+            if (table) {
+                data.table_name = table;
+            }
+
+            fetch('/api/analyze/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Format and display the response
+                    let resultHtml = '<h3>Response:</h3>';
+
+                    if (data.explanation) {
+                        resultHtml += `<p><strong>Explanation:</strong> ${data.explanation}</p>`;
+                    }
+
+                    if (data.result) {
+                        if (data.result.type === 'plot') {
+                            resultHtml += `<p><strong>Visualization:</strong></p>`;
+                            resultHtml += `<img src="data:image/png;base64,${data.result.data}" alt="Plot">`;
+                        } else if (data.result.type === 'dataframe') {
+                            resultHtml += `<p><strong>Data Result:</strong> ${data.result.message}</p>`;
+                            resultHtml += `<pre>${JSON.stringify(data.result.data, null, 2)}</pre>`;
+                        } else {
+                            resultHtml += `<p><strong>Result:</strong> ${data.result.message}</p>`;
+                            resultHtml += `<pre>${data.result.data}</pre>`;
+                        }
+                    }
+
+                    if (data.code) {
+                        resultHtml += `<p><strong>Generated Code:</strong></p>`;
+                        resultHtml += `<pre>${data.code}</pre>`;
+                    }
+
+                    resultDiv.innerHTML = resultHtml;
+                })
+                .catch(error => {
+                    resultDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+                });
+        }
+    </script>
+</body>
+
+</html>
