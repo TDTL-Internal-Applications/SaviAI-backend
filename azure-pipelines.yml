@@ -1,40 +1,73 @@
-# Python Django
-# Test a Django project on multiple versions of Python.
-# Add steps that analyze code, save build artifacts, deploy, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/python
-
 trigger:
 - master
 
 pool:
   vmImage: ubuntu-latest
-strategy:
-  matrix:
-    Python38:
-      PYTHON_VERSION: '3.8'
-    Python39:
-      PYTHON_VERSION: '3.9'
-    Python310:
-      PYTHON_VERSION: '3.10'
-  maxParallel: 3
+
+variables:
+  pythonVersion: '3.10'
+  appName: 'SAVI-AI'
+  packageDir: '$(System.DefaultWorkingDirectory)'
+  workingDirectory: '$(System.DefaultWorkingDirectory)'
 
 steps:
 - task: UsePythonVersion@0
   inputs:
-    versionSpec: '$(PYTHON_VERSION)'
+    versionSpec: '$(pythonVersion)'
     architecture: 'x64'
 
 - script: |
     python -m pip install --upgrade pip
     pip install -r requirements.txt
-  displayName: 'Install prerequisites'
+  displayName: 'Install dependencies'
+
+- script: |
+    python manage.py collectstatic --noinput
+  displayName: 'Collect static files'
+
+- script: |
+    python manage.py migrate
+  displayName: 'Apply database migrations'
 
 - script: |
     python manage.py test
   displayName: 'Run tests'
 
-- task: PublishTestResults@2
+- task: ArchiveFiles@2
   inputs:
-    testResultsFiles: '**/TEST-*.xml'
-    testRunTitle: 'Python $(PYTHON_VERSION)'
-  condition: succeededOrFailed()
+- task: AzureRmWebAppDeployment@5
+  inputs:
+    ConnectionType: 'AzureRM'
+    appType: 'webAppLinux'
+    WebAppName: 'SAVI-AI'
+    packageForLinux: 
+    RuntimeStack: 'Python (probably 3.10 or similar)'
+    StartupCommand: 'gunicorn savi_ai.wsgi:application --bind=0.0.0.0 --timeout 600'
+    DeploymentTypeLinux: 'oneDeploy'
+    rootFolderOrFile: '$(workingDirectory)'
+    includeRootFolder: false
+    archiveType: 'zip'
+    archiveFile: '$(Build.ArtifactStagingDirectory)/app.zip'
+    replaceExistingArchive: true
+  displayName: 'Archive Django app'
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    ArtifactName: 'drop'
+    publishLocation: 'Container'
+  displayName: 'Publish Artifact'
+
+- task: AzureWebApp@1
+  inputs:
+    azureSubscription: '<REPLACE_WITH_YOUR_SERVICE_CONNECTION>'
+    appType: 'webAppLinux'
+    appName: '$(appName)'
+    package: '$(Build.ArtifactStagingDirectory)/app.zip'
+    runtimeStack: 'PYTHON|3.10'
+    deploymentMethod: 'auto'
+    startupCommand: 'gunicorn savi_ai.wsgi:application --bind=0.0.0.0 --timeout 600'
+    resourceGroupName: '<REPLACE_WITH_RESOURCE_GROUP>'
+    deployToSlotOrASE: true
+    slotName: 'production'
+  displayName: 'Deploy to Azure App Service (Linux)'
