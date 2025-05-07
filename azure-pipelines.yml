@@ -1,14 +1,87 @@
-- task: AzureRmWebAppDeployment@5
-  displayName: 'Deploy Django Backend to Azure App Service'
-  inputs:
-    ConnectionType: 'AzureRM'
-    azureSubscription: 'SAVIAITDTLServiceConnection'
-    appType: 'webAppLinux'
-    WebAppName: 'SAVI-AI'
-    resourceGroupName: 'your-resource-group-name'  # Replace with actual RG name
-    packageForLinux: '$(Build.ArtifactStagingDirectory)/app.zip'
-    RuntimeStack: 'PYTHON|3.12'
-    StartupCommand: 'gunicorn savi_ai.wsgi:application --bind=0.0.0.0 --timeout 600'
-    DeploymentTypeLinux: 'oneDeploy'
-    deployToSlotOrASE: true
-    slotName: 'production'
+trigger:
+
+  branches:
+
+    include:
+
+      - master
+ 
+pool:
+
+  vmImage: 'ubuntu-latest'
+ 
+variables:
+
+  pythonVersion: '3.12'
+
+  djangoSettingsModule: 'saviai.settings'  # Change this to your Django settings module
+ 
+stages:
+
+- stage: BuildAndTest
+
+  jobs:
+
+  - job: BuildAndTestJob
+
+    steps:
+
+    - task: UsePythonVersion@0
+
+      inputs:
+
+        versionSpec: '$(pythonVersion)'
+
+      displayName: 'Use Python $(pythonVersion)'
+ 
+    - script: |
+
+        python -m venv venv
+
+        source venv/bin/activate
+
+        pip install --upgrade pip
+
+        pip install -r requirements.txt
+
+      displayName: 'Install dependencies'
+ 
+    - script: |
+
+        source venv/bin/activate
+
+        python manage.py test
+
+      displayName: 'Run Django tests'
+ 
+    - script: |
+
+        source venv/bin/activate
+
+        python manage.py collectstatic --noinput
+
+      displayName: 'Collect static files'
+
+      condition: succeeded()
+ 
+- stage: Deploy
+
+  dependsOn: BuildAndTest
+
+  condition: succeeded()
+
+  jobs:
+
+  - job: DeployJob
+
+    steps:
+
+    - script: |
+
+        echo "Deploying to Azure or your server..."
+
+        # Add deployment steps here (e.g., Azure Web App deploy, SSH to VM, etc.)
+
+      displayName: 'Deployment Step'
+
+ 
