@@ -82,6 +82,6 @@ stages:
 
         # Add deployment steps here (e.g., Azure Web App deploy, SSH to VM, etc.)
 
-      displayName: 'Deployment Step'
+      displayName: 'Azure app service deploy'
 
  
