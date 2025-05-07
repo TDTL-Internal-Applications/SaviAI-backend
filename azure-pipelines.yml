@@ -1,4 +1,14 @@
 trigger:
+- task: AzureRmWebAppDeployment@5
+  inputs:
+    ConnectionType: 'AzureRM'
+    azureSubscription: 'SAVIAITDTLServiceConnection'
+    appType: 'webAppLinux'
+    WebAppName: 
+    deployToSlotOrASE: true
+    SlotName: 'production'
+    packageForLinux: '$(System.DefaultWorkingDirectory)/**/*.zip'
+    DeploymentTypeLinux: 'oneDeploy'
 
   branches:
 
