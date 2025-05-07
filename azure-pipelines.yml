@@ -1,22 +1,14 @@
-- task: AzureWebApp@1
-  displayName: 'Deploy to Azure App Service (Linux)'
-  inputs:
-    azureSubscription: 'azure-savi-connection'  # This must be an existing, valid service connection
-    appType: 'webAppLinux'
-    appName: 'SAVI-AI'
-    package: '$(Build.ArtifactStagingDirectory)/app.zip'
-    runtimeStack: 'PYTHON|3.10'
-    deploymentMethod: 'auto'
-    startupCommand: '- task: AzureRmWebAppDeployment@5
+- task: AzureRmWebAppDeployment@5
+  displayName: 'Deploy Django Backend to Azure App Service'
   inputs:
     ConnectionType: 'AzureRM'
     azureSubscription: 'SAVIAITDTLServiceConnection'
     appType: 'webAppLinux'
     WebAppName: 'SAVI-AI'
-    packageForLinux: '$(System.DefaultWorkingDirectory)/**/*.zip'
+    resourceGroupName: 'your-resource-group-name'  # Replace with actual RG name
+    packageForLinux: '$(Build.ArtifactStagingDirectory)/app.zip'
     RuntimeStack: 'PYTHON|3.12'
     StartupCommand: 'gunicorn savi_ai.wsgi:application --bind=0.0.0.0 --timeout 600'
-    DeploymentTypeLinux: 'oneDeploy''
-    resourceGroupName: 'your-resource-group-name'
+    DeploymentTypeLinux: 'oneDeploy'
     deployToSlotOrASE: true
     slotName: 'production'
