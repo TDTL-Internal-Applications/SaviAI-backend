@@ -7,7 +7,16 @@
     package: '$(Build.ArtifactStagingDirectory)/app.zip'
     runtimeStack: 'PYTHON|3.10'
     deploymentMethod: 'auto'
-    startupCommand: 'gunicorn savi_ai.wsgi:application --bind=0.0.0.0 --timeout 600'
+    startupCommand: '- task: AzureRmWebAppDeployment@5
+  inputs:
+    ConnectionType: 'AzureRM'
+    azureSubscription: 'SAVIAITDTLServiceConnection'
+    appType: 'webAppLinux'
+    WebAppName: 'SAVI-AI'
+    packageForLinux: '$(System.DefaultWorkingDirectory)/**/*.zip'
+    RuntimeStack: 'PYTHON|3.12'
+    StartupCommand: 'gunicorn savi_ai.wsgi:application --bind=0.0.0.0 --timeout 600'
+    DeploymentTypeLinux: 'oneDeploy''
     resourceGroupName: 'your-resource-group-name'
     deployToSlotOrASE: true
     slotName: 'production'
