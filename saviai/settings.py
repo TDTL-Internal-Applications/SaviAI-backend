@@ -114,9 +114,9 @@ USE_TZ = True
 
 # Static files
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / "staticfiles"
+STATIC_ROOT = BASE_DIR / "staticfiles"  # This is the directory where static files will be collected
 STATICFILES_DIRS = [
-    BASE_DIR / "static",  # Optional: only if you store extra static files here
+    BASE_DIR / "static",  # Optional: This points to a folder if you want to include extra static files
 ]
 
 # Media files
