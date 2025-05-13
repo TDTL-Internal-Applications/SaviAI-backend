@@ -7,14 +7,9 @@ User = get_user_model()
 
 
 class UserSerializer(serializers.ModelSerializer):
-    profile_picture = serializers.SerializerMethodField()
- 
     class Meta:
         model = CustomUser
-        fields = ['id', 'username', 'first_name', 'last_name', 'email', 'role', 'profile_picture']
- 
-    def get_profile_picture(self, obj):
-        return obj.profile_picture.name if obj.profile_picture else None
+        fields = ['id', 'username', 'first_name', 'last_name', 'email', 'role']
 
 
 class RegisterSerializer(serializers.ModelSerializer):

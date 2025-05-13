@@ -42,19 +42,15 @@ class LoginView(generics.GenericAPIView):  # Login
 class UserDetailView(generics.RetrieveAPIView):  # Get Current User
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
- 
+
     def get_object(self):
         return self.request.user
- 
- 
-from rest_framework import generics, permissions, parsers
-from .serializers import UserSerializer
- 
-class SelfUpdateView(generics.RetrieveUpdateAPIView):
+
+
+class SelfUpdateView(generics.RetrieveUpdateAPIView):  # Update Own Profile
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
-    parser_classes = [parsers.MultiPartParser, parsers.FormParser]  # 👈 Necessary for file upload
- 
+
     def get_object(self):
         return self.request.user
 
